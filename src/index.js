@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { Notify } from 'notiflix/build/notiflix-notify-aio';
 
 const refs = {
   formEl: document.querySelector('#search-form'),
@@ -11,8 +12,6 @@ refs.loadMoreBtn.style.visibility = 'hidden';
 let numPage = 1;
 
 let photoName = '';
-
-console.log(refs.formEl);
 
 const API_KEY = '32190831-932b1a3f6204f940916e3fe08';
 
@@ -57,23 +56,54 @@ async function fetchImg(photoName, nPage) {
     },
   };
 
-  return await axios
-    .get(`${BASE_URL}`, queryParams)
-    .then(res => makeMarkup(res.data.hits));
+  return await axios.get(`${BASE_URL}`, queryParams).then(res => {
+    const el = res.data;
+    makeMarkup(el.hits);
+    refs.loadMoreBtn.style.visibility = 'visible';
+    return el;
+  });
 }
 
 refs.formEl.addEventListener('submit', e => {
-  refs.loadMoreBtn.style.visibility = 'visible';
+  numPage = 1;
+  if (refs.loadMoreBtn.style.visibility == 'visible') {
+    refs.loadMoreBtn.style.visibility = 'hidden';
+  }
   refs.galleryEl.innerHTML = '';
 
   e.preventDefault();
 
   const formElement = e.currentTarget.elements;
-  photoName = formElement.searchQuery.value;
+  photoName = formElement.searchQuery.value.trim();
+  if (photoName == '') {
+    return;
+  }
 
-  fetchImg(photoName, numPage);
+  fetchImg(photoName, numPage).then(el => {
+    if (el.hits.length == 0) {
+      refs.loadMoreBtn.style.visibility = 'hidden';
+      Notify.failure(
+        'Sorry, there are no images matching your search query. Please try again.'
+      );
+    }
+  });
 });
 
 refs.loadMoreBtn.addEventListener('click', () => {
-  fetchImg(photoName, numPage + 1);
+  numPage += 1;
+  fetchImg(photoName, numPage)
+    .then(el => {
+      if (el.hits.length == 0) {
+        refs.loadMoreBtn.style.visibility = 'hidden';
+        Notify.failure(
+          "We're sorry, but you've reached the end of search results."
+        );
+      }
+    })
+    .catch(() => {
+      refs.loadMoreBtn.style.visibility = 'hidden';
+      Notify.warning(
+        "We're sorry, but you've reached the end of search results."
+      );
+    });
 });
