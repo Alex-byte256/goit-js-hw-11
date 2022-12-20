@@ -16,10 +16,9 @@ let photoName = '';
 const API_KEY = '32190831-932b1a3f6204f940916e3fe08';
 
 function makeMarkup(arr) {
-  arr.forEach(el => {
-    refs.galleryEl.insertAdjacentHTML(
-      'beforeend',
-      `
+  const markup = arr
+    .map(
+      el => `
 		<div class="photo-card">
   <img src="${el.webformatURL}" alt="${el.tags}" loading="lazy" />
   <div class="info">
@@ -38,8 +37,10 @@ function makeMarkup(arr) {
   </div>
 </div>
 		`
-    );
-  });
+    )
+    .join('');
+
+  refs.galleryEl.insertAdjacentHTML('beforeend', markup);
 }
 
 async function fetchImg(photoName, nPage) {
@@ -56,12 +57,11 @@ async function fetchImg(photoName, nPage) {
     },
   };
 
-  return await axios.get(`${BASE_URL}`, queryParams).then(res => {
-    const el = res.data;
-    makeMarkup(el.hits);
-    refs.loadMoreBtn.style.visibility = 'visible';
-    return el;
-  });
+  const res = await axios.get(`${BASE_URL}`, queryParams);
+  const el = res.data;
+  makeMarkup(el.hits);
+  refs.loadMoreBtn.style.visibility = 'visible';
+  return el;
 }
 
 refs.formEl.addEventListener('submit', e => {
@@ -89,21 +89,20 @@ refs.formEl.addEventListener('submit', e => {
   });
 });
 
-refs.loadMoreBtn.addEventListener('click', () => {
-  numPage += 1;
-  fetchImg(photoName, numPage)
-    .then(el => {
-      if (el.hits.length == 0) {
-        refs.loadMoreBtn.style.visibility = 'hidden';
-        Notify.failure(
-          "We're sorry, but you've reached the end of search results."
-        );
-      }
-    })
-    .catch(() => {
+refs.loadMoreBtn.addEventListener('click', async () => {
+  try {
+    numPage += 1;
+    const el = await fetchImg(photoName, numPage);
+    if (el.hits.length == 0) {
       refs.loadMoreBtn.style.visibility = 'hidden';
-      Notify.warning(
+      Notify.failure(
         "We're sorry, but you've reached the end of search results."
       );
-    });
+    }
+  } catch {
+    refs.loadMoreBtn.style.visibility = 'hidden';
+    Notify.warning(
+      "We're sorry, but you've reached the end of search results."
+    );
+  }
 });
