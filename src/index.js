@@ -78,13 +78,16 @@ refs.formEl.addEventListener('submit', async e => {
   if (photoName == '') {
     return;
   }
-
-  const el = await fetchImg(photoName, numPage);
-  if (el.hits.length == 0) {
-    refs.loadMoreBtn.style.visibility = 'hidden';
-    Notify.failure(
-      'Sorry, there are no images matching your search query. Please try again.'
-    );
+  try {
+    const el = await fetchImg(photoName, numPage);
+    if (el.hits.length == 0) {
+      refs.loadMoreBtn.style.visibility = 'hidden';
+      Notify.failure(
+        'Sorry, there are no images matching your search query. Please try again.'
+      );
+    }
+  } catch (err) {
+    console.log(err);
   }
 });
 
