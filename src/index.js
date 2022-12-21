@@ -64,7 +64,7 @@ async function fetchImg(photoName, nPage) {
   return el;
 }
 
-refs.formEl.addEventListener('submit', e => {
+refs.formEl.addEventListener('submit', async e => {
   numPage = 1;
   if (refs.loadMoreBtn.style.visibility == 'visible') {
     refs.loadMoreBtn.style.visibility = 'hidden';
@@ -79,14 +79,13 @@ refs.formEl.addEventListener('submit', e => {
     return;
   }
 
-  fetchImg(photoName, numPage).then(el => {
-    if (el.hits.length == 0) {
-      refs.loadMoreBtn.style.visibility = 'hidden';
-      Notify.failure(
-        'Sorry, there are no images matching your search query. Please try again.'
-      );
-    }
-  });
+  const el = await fetchImg(photoName, numPage);
+  if (el.hits.length == 0) {
+    refs.loadMoreBtn.style.visibility = 'hidden';
+    Notify.failure(
+      'Sorry, there are no images matching your search query. Please try again.'
+    );
+  }
 });
 
 refs.loadMoreBtn.addEventListener('click', async () => {
